@@ -58,7 +58,7 @@ class MyHandler(blivedm.BaseHandler):
 
     async def _on_super_chat(self, client: blivedm.BLiveClient, message: blivedm.SuperChatMessage):
         print(f'[{client.room_id}] 醒目留言 ¥{message.price} {message.uname}：{message.message}')
-        rank.update(message.uid, message.price)
+        rank.update(message.uid, message.price*1000)
 
 
 if __name__ == '__main__':
