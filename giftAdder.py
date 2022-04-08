@@ -1,37 +1,27 @@
-
 import queue
-from func_timeout import func_timeout, FunctionTimedOut
 
-re = {}
-
-def giftAdder(giftQueue,re={}):
+def GiftAdder(giftQueue:queue.Queue,re={}) -> dict:
     if "amount" not in re:
         re = {"amount": 0}
 
-    while giftQueue.empty() != True and re["amount"]<20:
-        gift = giftQueue.get()
-        if gift["uid"] in re:
-            re[gift["uid"]] += gift["qn"]
-        else:
-            re[gift["uid"]] = gift["qn"]
-            
-        re["amount"]+=1
+    while re["amount"]<20:
+        try:
+            gift = giftQueue.get(timeout=5) # 阻塞 5 秒
+            if gift["uid"] in re:
+                re[gift["uid"]] += gift["qn"]
+            else:
+                re[gift["uid"]] = gift["qn"]
+                
+            re["amount"]+=1
+        except queue.Empty:
+            re.pop("amount")
+            return re
+        except Exception as e:
+            return e
 
     re.pop("amount")
     return re
     
-    
-def GiftAdder(giftQueue,re={}): 
-    try:
-        re = func_timeout(10, giftAdder, args=(giftQueue,{}))
-    except FunctionTimedOut:
-        return re
-        # for uid, qn in re.items():
-            # pass # TODO:将 re 存入数据库
-    except Exception as e:
-        return e
-    return re
-
 if __name__ == '__main__':
     giftQueue = queue.Queue(0)
     for i in range(10):
