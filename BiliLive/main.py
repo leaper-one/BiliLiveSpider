@@ -1,13 +1,14 @@
 import asyncio
 import queue
 import random
+import threading
 
 import blivedm
 import rank
 
 from threading import Thread, Event
 from queue import Queue
-
+from threading import Timer
 
 # giftQueue = queue.Queue()
 # 直播间ID的取值看直播间URL
@@ -47,6 +48,16 @@ async def run_single_client():
     finally:
         await client.stop_and_close()
 
+def consumer():
+    while True:
+        print(giftRecived.get())
+
+def asyncMain():
+    loop = asyncio.get_event_loop()
+    tasks = [main()]
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
+
 class MyHandler(blivedm.BaseHandler):
 
     def __init__(self, queue: queue.Queue):
@@ -85,7 +96,9 @@ class MyHandler(blivedm.BaseHandler):
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    tasks = [main()]
-    loop.run_until_complete(asyncio.wait(tasks))
-    loop.close()
+    t1 = threading.Thread(target=asyncMain())
+    t2 = threading.Thread(target=consumer())
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
