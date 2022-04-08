@@ -1,32 +1,15 @@
-import asyncio
+import BiliLive.blivedm as blivedm
 import queue
-import random
-import threading
+import asyncio
 
-import blivedm
-import rank
+q = queue.Queue()
 
-from threading import Thread, Event
-from queue import Queue
-from threading import Timer
+def asyncMain(room, queue):
+    loop = asyncio.new_event_loop()
+    task = [main(room, queue)]
+    loop.run_until_complete(asyncio.wait(task))
+    loop.close()
 
-# giftQueue = queue.Queue()
-# 直播间ID的取值看直播间URL
-TEST_ROOM_IDS = [
-    7777,
-]
-# giftRecived = Queue()
-
-# class consumer(Thread):
-#     def __init__(self, queue):
-#         Thread.__init__(self)
-#         self.queue = queue
-#
-#         def run(self):
-#             while True:
-#                 gift = self.queue.get()
-#                 print(gift)
-#                 self.queue.take_done()
 
 async def main(room, queue):
     await run_single_client(room, queue)
@@ -36,7 +19,7 @@ async def run_single_client(room, queue):
     """
     演示监听一个直播间
     """
-    room_id = room
+    room_id = 7777
     # 如果SSL验证失败就把ssl设为False，B站真的有过忘续证书的情况
     client = blivedm.BLiveClient(room_id, ssl=True)
     handler = MyHandler(queue)
@@ -83,3 +66,6 @@ class MyHandler(blivedm.BaseHandler):
         # print(f'[{client.room_id}] 醒目留言 ¥{message.price} {message.uname}：{message.message}')
         self.queue.put([message.uid, message.price])
         print(self.queue.qsize())
+
+if __name__ == '__main__':
+    asyncMain(7777, q)
