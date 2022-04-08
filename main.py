@@ -3,8 +3,7 @@ import queue
 import spider
 import time
 
-
-
+# 输出giftRecived队列并处理
 def consumer(queue: queue.Queue):
     while True:
         gift = giftRecived.get()
@@ -21,4 +20,4 @@ if __name__ == '__main__':
     t1.join()
     t2.join()
 
-    #TODO: 销毁线程
+    # TODO: 销毁线程
