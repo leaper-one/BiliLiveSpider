@@ -11,8 +11,8 @@ def KeepEyeOn(room_id:str, queue:queue.Queue, stopFlag:bool):
     try:
         loop.run_until_complete(asyncio.wait(task))
     finally:
-        # print("loop close")
         loop.close()
+        print("loop close")
 
 async def run_single_client(room_id, queue, stopFlag:bool):
     """
@@ -26,13 +26,13 @@ async def run_single_client(room_id, queue, stopFlag:bool):
     client.start()
     try:
         # await client.join()
-        while True and client.is_running:
+        while True:
             if stopFlag():
                 break
+            await asyncio.sleep(1)
     finally:
-        print("stop KeepEyeOn")
         await client.stop_and_close()
-
+    
 
 class MyHandler(blivedm.BaseHandler):
 
@@ -43,15 +43,17 @@ class MyHandler(blivedm.BaseHandler):
         # print(f'[{client.room_id}] {message.uname} 赠送{message.gift_name}x{message.num}'
         #       f' （{message.coin_type}瓜子x{message.total_coin}）')
         # if message.coin_type != 'silver':
-        self.queue.put({'room_id':client.room_id, 'uid':message.uid, 'qn':message.price})
+        self.queue.put([message.uid,message.price])
         # print(self.queue.qsize())
 
     async def _on_buy_guard(self, client: blivedm.BLiveClient, message: blivedm.GuardBuyMessage):
         # print(f'[{client.room_id}] {message.username} 购买{message.gift_name}')
-        self.queue.put({'room_id':client.room_id, 'uid':message.uid, 'qn':message.price})
+        # self.queue.put({'room_id':client.room_id, 'uid':message.uid, 'qn':message.price})
+        self.queue.put([message.uid,message.price])
         # print(self.queue.qsize())
 
     async def _on_super_chat(self, client: blivedm.BLiveClient, message: blivedm.SuperChatMessage):
         # print(f'[{client.room_id}] 醒目留言 ¥{message.price} {message.uname}：{message.message}')
-        self.queue.put({'room_id':client.room_id, 'uid':message.uid, 'qn':message.price})
+        # self.queue.put({'room_id':client.room_id, 'uid':message.uid, 'qn':message.price})
+        self.queue.put([message.uid,message.price])
         # print(self.queue.qsize())

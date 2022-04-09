@@ -1,6 +1,8 @@
 # 默认忽略的文件
+/__pycache__
 /shelf/
 /workspace.xml
 /.idea/
 /BiliLive/.idea/
+/BiliLive/blivedm/__pycache__
 /BiliLive/__pycache__/
