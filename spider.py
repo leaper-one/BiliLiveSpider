@@ -1,16 +1,20 @@
+from tracemalloc import stop
 import BiliLive.blivedm as blivedm
 import queue
 import asyncio
 
 # taskType=[str,queue.Queue]
 
-def KeepEyeOn(room_id:str, queue:queue.Queue):
+def KeepEyeOn(room_id:str, queue:queue.Queue, stopFlag:bool):
     loop = asyncio.new_event_loop()
-    task = [run_single_client(room_id, queue)]
-    loop.run_until_complete(asyncio.wait(task))
-    loop.close()
+    task = [run_single_client(room_id, queue, lambda: stopFlag())]
+    try:
+        loop.run_until_complete(asyncio.wait(task))
+    finally:
+        # print("loop close")
+        loop.close()
 
-async def run_single_client(room_id, queue):
+async def run_single_client(room_id, queue, stopFlag:bool):
     """
     监听一个直播间
     """
@@ -21,8 +25,12 @@ async def run_single_client(room_id, queue):
 
     client.start()
     try:
-        await client.join()
+        # await client.join()
+        while True and client.is_running:
+            if stopFlag():
+                break
     finally:
+        print("stop KeepEyeOn")
         await client.stop_and_close()
 
 
