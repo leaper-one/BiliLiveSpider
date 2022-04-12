@@ -5,6 +5,10 @@ from sqlalchemy import Column, String, Integer, Text, TIMESTAMP, text
 from sqlalchemy.orm import sessionmaker, relationship
 import time
 
+__all__ = (
+    'Rank',
+)
+
 engine = create_engine(r'sqlite:///db.sqlite3')
 
 Base = declarative_base()
