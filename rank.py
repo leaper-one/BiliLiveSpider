@@ -41,17 +41,17 @@ class Rank:
         search = self.__session.query(modelRank).filter(modelRank.uid == uid and modelRank.room_id == room_id).first()
         if search:
             if search.qn != qn:
-                self.update_func(room_id, uid, qn)
+                self.__update_func(room_id, uid, qn)
         else:
-            self.create_func(room_id, uid, qn)
+            self.__create_func(room_id, uid, qn)
 
-    def update_func(self, room_id: str, uid: str, qn: int):
+    def __update_func(self, room_id: str, uid: str, qn: int):
         self.__qn = self.__session.query(modelRank).filter(modelRank.uid == uid and modelRank.room_id == room_id).first().qn
         self.__session.query(modelRank).filter(modelRank.uid == uid).delete()
         self.__session.commit()
-        self.create_func(room_id, uid, qn=qn + self.__qn)  # 将原qn值添加后传入creat_func处理
+        self.__create_func(room_id, uid, qn=qn + self.__qn)  # 将原qn值添加后传入creat_func处理
 
-    def create_func(self, room_id: str, uid: str, qn: int):
+    def __create_func(self, room_id: str, uid: str, qn: int):
         self.__rank = 0
         search = self.__session.query(modelRank).order_by(modelRank.rank.desc() and modelRank.room_id == room_id).all()
         if search:
