@@ -42,18 +42,18 @@ class MyHandler(blivedm.BaseHandler):
     async def _on_gift(self, client: blivedm.BLiveClient, message: blivedm.GiftMessage):
         # print(f'[{client.room_id}] {message.uname} 赠送{message.gift_name}x{message.num}'
         #       f' （{message.coin_type}瓜子x{message.total_coin}）')
-        # if message.coin_type != 'silver':
-        self.queue.put([message.uid,message.price])
+        if message.coin_type != 'silver':
+            self.queue.put([message.uid, message.price])
         # print(self.queue.qsize())
 
     async def _on_buy_guard(self, client: blivedm.BLiveClient, message: blivedm.GuardBuyMessage):
         # print(f'[{client.room_id}] {message.username} 购买{message.gift_name}')
         # self.queue.put({'room_id':client.room_id, 'uid':message.uid, 'qn':message.price})
-        self.queue.put([message.uid,message.price])
+        self.queue.put([message.uid, message.price])
         # print(self.queue.qsize())
 
     async def _on_super_chat(self, client: blivedm.BLiveClient, message: blivedm.SuperChatMessage):
         # print(f'[{client.room_id}] 醒目留言 ¥{message.price} {message.uname}：{message.message}')
         # self.queue.put({'room_id':client.room_id, 'uid':message.uid, 'qn':message.price})
-        self.queue.put([message.uid,message.price])
+        self.queue.put([message.uid, message.price * 1000])
         # print(self.queue.qsize())
