@@ -16,7 +16,7 @@ class modelRank(Base):
     # 表结构
     id = Column(Integer, primary_key=True)
     uid = Column(String(100))
-    room_id = Column(Integer, default=0)
+    room_id = Column(String(100))
     rank = Column(Integer, default=0)
     qn = Column(Integer, default=0)
     ts = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
@@ -37,7 +37,7 @@ class Rank:
         self._session = self._Session()
 
     # 排名主要方法，请传入参数直播间room_id、用户的uid以及增加的qn值（注意不是增加后的qn值
-    def rank(self, room_id: int, uid: str, qn: int):
+    def rank(self, room_id: str, uid: str, qn: int):
         search = self._session.query(modelRank).filter(modelRank.uid == uid and modelRank.room_id == room_id).first()
         if search:
             if search.qn != qn:
@@ -45,13 +45,13 @@ class Rank:
         else:
             self.create_func(room_id, uid, qn)
 
-    def update_func(self, room_id: int, uid: str, qn: int):
+    def update_func(self, room_id: str, uid: str, qn: int):
         self._qn = self._session.query(modelRank).filter(modelRank.uid == uid and modelRank.room_id == room_id).first().qn
         self._session.query(modelRank).filter(modelRank.uid == uid).delete()
         self._session.commit()
         self.create_func(room_id, uid, qn=qn + self._qn)  # 将原qn值添加后传入creat_func处理
 
-    def create_func(self, room_id: int, uid: str, qn: int):
+    def create_func(self, room_id: str, uid: str, qn: int):
         self._rank = 0
         search = self._session.query(modelRank).order_by(modelRank.rank.desc() and modelRank.room_id == room_id).all()
         if search:
