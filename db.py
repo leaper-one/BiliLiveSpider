@@ -1,12 +1,10 @@
-from sqlalchemy import create_engine, Table
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import ForeignKey
-from sqlalchemy import Column, String, Integer, Text, TIMESTAMP, text
-from sqlalchemy.orm import sessionmaker, relationship
-import time
+from sqlalchemy import Column, String, Integer, TIMESTAMP, text
+from sqlalchemy.orm import sessionmaker
 
 __all__ = (
-    'Rank',
+    'SQLControl',
 )
 
 engine = create_engine(r'sqlite:///db.sqlite3')
@@ -26,7 +24,7 @@ class modelRank(Base):
     ts = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
 
 
-class Rank:
+class SQLControl:
 
     def __init__(self):
         # 定义Rank表中rank字段的范围
@@ -34,48 +32,57 @@ class Rank:
         self.min = int(0)
         self.add = int(10E6)
 
-        self.__qn = None
-        self.__rank = None
         # 连接数据库
         self.__Session = sessionmaker(bind=engine)
         self.__session = self.__Session()
+
+    # 通过room_id来删除数据，用于直播结束时
+    def del_by_room_id(self, room_id: str):
+        search = self.__session.query(modelRank).filter(modelRank.room_id == room_id)
+        if search:
+            search.delete()
+            self.__session.commit()
 
     # 排名主要方法，请传入参数直播间room_id、用户的uid以及增加的qn值（注意不是增加后的qn值
     def rank(self, room_id: str, uid: str, qn: int):
         search = self.__session.query(modelRank).filter(modelRank.uid == uid and modelRank.room_id == room_id).first()
         if search:
-            if search.qn != qn:
-                self.__update_func(room_id, uid, qn)
+            self.__update_func(room_id, uid, qn)
         else:
             self.__create_func(room_id, uid, qn)
 
     def __update_func(self, room_id: str, uid: str, qn: int):
-        self.__qn = self.__session.query(modelRank).filter(modelRank.uid == uid and modelRank.room_id == room_id).first().qn
+        _qn = self.__session.query(modelRank).filter(modelRank.uid == uid and modelRank.room_id == room_id).first().qn
         self.__session.query(modelRank).filter(modelRank.uid == uid).delete()
         self.__session.commit()
-        self.__create_func(room_id, uid, qn=qn + self.__qn)  # 将原qn值添加后传入creat_func处理
+        self.__create_func(room_id, uid, qn=qn + _qn)  # 将原qn值添加后传入creat_func处理
 
     def __create_func(self, room_id: str, uid: str, qn: int):
-        self.__rank = 0
+        rank = 0
         search = self.__session.query(modelRank).order_by(modelRank.rank.desc() and modelRank.room_id == room_id).all()
         if search:
             if qn > search[0].qn:
-                self.__rank = search[0].rank + self.add
+                rank = search[0].rank + self.add
             elif qn < search[-1].qn:
-                self.__rank = search[-1].rank - self.add
+                rank = search[-1].rank - self.add
             elif len(search) == 1:
                 if qn >= search[0].qn:
-                    self.__rank = search[0].rank + self.add
+                    rank = search[0].rank + self.add
                 else:
-                    self.__rank = search[0].rank - self.add
+                    rank = search[0].rank - self.add
             else:
                 for i in range(len(search)):
                     if search[i].qn >= qn >= search[i + 1].qn:
-                        self.__rank = (search[i].rank + search[i + 1].rank) / 2
+                        rank = (search[i].rank + search[i + 1].rank) / 2
                         break
-            self.__session.add(modelRank(room_id=room_id, uid=uid, rank=int(self.__rank), qn=qn))
+            self.__session.add(modelRank(room_id=room_id, uid=uid, rank=int(rank), qn=qn))
             self.__session.commit()
         else:
-            self.__rank = (max - min) / 2
-            self.__session.add(modelRank(room_id=room_id, uid=uid, rank=self.__rank, qn=qn))
+            rank = (max - min) / 2
+            self.__session.add(modelRank(room_id=room_id, uid=uid, rank=rank, qn=qn))
             self.__session.commit()
+
+
+# 直接运行该文件将会创建表
+if __name__ == '__main__':
+    Base.metadata.create_all(engine)
