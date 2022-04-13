@@ -2,13 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Integer, TIMESTAMP, text
 from sqlalchemy.orm import sessionmaker
+import time
 
 __all__ = (
     'SQLControl',
 )
 
 engine = create_engine(r'sqlite:///db.sqlite3')
-
 Base = declarative_base()
 
 
@@ -21,7 +21,7 @@ class modelRank(Base):
     room_id = Column(String(100))
     rank = Column(Integer, default=0)
     qn = Column(Integer, default=0)
-    ts = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
+    ts = Column(TIMESTAMP, server_default=Integer('CURRENT_TIMESTAMP'), server_onupdate=Integer('CURRENT_TIMESTAMP'))
 
 
 class SQLControl:
@@ -75,13 +75,20 @@ class SQLControl:
                     if search[i].qn >= qn >= search[i + 1].qn:
                         rank = (search[i].rank + search[i + 1].rank) / 2
                         break
-            self.__session.add(modelRank(room_id=room_id, uid=uid, rank=int(rank), qn=qn))
-            self.__session.commit()
+            model = modelRank(room_id=room_id, uid=uid, rank=rank, qn=qn, ts=time.time() * 10E6)
+            self.__auto_commit(model)
         else:
             rank = (max - min) / 2
-            self.__session.add(modelRank(room_id=room_id, uid=uid, rank=rank, qn=qn))
-            self.__session.commit()
+            model = modelRank(room_id=room_id, uid=uid, rank=rank, qn=qn, ts=time.time()*10E6)
+            self.__auto_commit(model)
 
+    def __auto_commit(self, model: modelRank):
+        try:
+            self.__session.add(model)
+            self.__session.commit()
+        except Exception as e:
+            self.__session.rollback()
+            raise e
 
 # 直接运行该文件将会创建表
 if __name__ == '__main__':
