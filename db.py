@@ -21,7 +21,7 @@ class modelRank(Base):
     room_id = Column(String(100))
     rank = Column(Integer, default=0)
     qn = Column(Integer, default=0)
-    ts = Column(TIMESTAMP, server_default=Integer('CURRENT_TIMESTAMP'), server_onupdate=Integer('CURRENT_TIMESTAMP'))
+    ts = Column(Integer, nullable=False, default=0)
 
 
 class SQLControl:
